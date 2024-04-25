@@ -3,7 +3,16 @@
 #include <rtthread.h>
 
 static Context* ev_handler(Event e, Context *c) {
+  rt_thread_t thread;
+  thread = rt_thread_self();
+  rt_ubase_t to = (rt_ubase_t)thread->user_data;
+
+  rt_uint8_t **pp = (rt_uint8_t **)to;
+  rt_uint8_t *t = *pp;
+  Context* cc = (Context*) t;
+  
   switch (e.event) {
+    case 0x1 : c = cc; break;
     default: printf("Unhandled event ID = %d\n", e.event); assert(0);
   }
   return c;
@@ -14,10 +23,25 @@ void __am_cte_init() {
 }
 
 void rt_hw_context_switch_to(rt_ubase_t to) {
-  assert(0);
+  rt_thread_t thread;
+  thread = rt_thread_self();
+  rt_uint32_t temp = thread->user_data;
+  thread->user_data = (rt_uint32_t) to;
+  yield();
+  thread->user_data = temp;
 }
 
 void rt_hw_context_switch(rt_ubase_t from, rt_ubase_t to) {
+  rt_thread_t thread;
+  thread = rt_thread_self();
+  
+  rt_uint8_t **pp = (rt_uint8_t **)from;
+  *pp = (rt_uint8_t *)thread->sp;
+
+  rt_uint32_t temp = thread->user_data;
+  thread->user_data = (rt_uint32_t) to;
+  yield();
+  thread->user_data = temp;
   assert(0);
 }
 
@@ -46,6 +70,9 @@ rt_uint8_t *rt_hw_stack_init(void *tentry, void *parameter, rt_uint8_t *stack_ad
   stack_addr = (rt_uint8_t *)aligned_addr;
 
   CombinedArgs* args = (CombinedArgs*)malloc(sizeof(CombinedArgs));
+  if (args == NULL) {
+    assert(0);
+  }
   args->tentry_ = tentry;
   args->parameter_ = parameter;
   args->texit_ = texit;

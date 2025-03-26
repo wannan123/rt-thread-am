@@ -177,6 +177,6 @@ void *rt_hw_stack_init(void *tentry, void *parameter, rt_uint8_t *stack_addr, vo
   args->texit_ = texit;
   args->a = 9;
   
-  Context *kcontextt = kcontext((Area) { stack_addr-2048, stack_addr-1 }, entry, (void *)args);
+  Context *kcontextt = kcontext((Area) { stack_addr-2048, stack_addr }, entry, (void *)args);
   return (rt_uint8_t *)kcontextt;
 }
